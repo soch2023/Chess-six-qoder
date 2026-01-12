@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ziffi Chess - 6步快棋</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Ziffi Chess</h1>
+            <p>6步快棋 - 2分钟决战</p>
+        </header>
+
+        <main>
+            <!-- 游戏模式选择 -->
+            <section id="game-mode-selection" class="panel">
+                <h2>选择游戏模式</h2>
+                <div class="mode-buttons">
+                    <button id="human-vs-engine" class="mode-btn">人机对战</button>
+                    <button id="engine-vs-engine" class="mode-btn">机器自战</button>
+                    <button id="local-two-player" class="mode-btn">本地双人</button>
+                    <button id="online-two-player" class="mode-btn">挑战好友</button>
+                </div>
+                
+                <!-- 难度选择（仅人机对战模式） -->
+                <div id="difficulty-selection" class="difficulty-panel hidden">
+                    <h3>选择难度</h3>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn" data-level="0">新手 (600 ELO)</button>
+                        <button class="difficulty-btn" data-level="1">业余 (1000 ELO)</button>
+                        <button class="difficulty-btn" data-level="2">进阶 (1400 ELO)</button>
+                        <button class="difficulty-btn" data-level="3">高手 (1800 ELO)</button>
+                        <button class="difficulty-btn" data-level="4">专家 (2200 ELO)</button>
+                        <button class="difficulty-btn" data-level="5">大师 (2800 ELO)</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 游戏界面 -->
+            <section id="game-board-container" class="panel hidden">
+                <div class="game-header">
+                    <div class="game-info">
+                        <span id="current-player">当前: 白方</span>
+                        <span id="move-counter">步数: 0/6</span>
+                        <span id="timer">时间: 2:00</span>
+                    </div>
+                    <div class="controls">
+                        <button id="flip-board" class="control-btn">翻转棋盘</button>
+                        <button id="swap-sides" class="control-btn">交换角色</button>
+                        <button id="undo-move" class="control-btn">撤销</button>
+                        <button id="redo-move" class="control-btn">重做</button>
+                        <button id="new-game" class="control-btn">新游戏</button>
+                    </div>
+                </div>
+                
+                <div class="board-container">
+                    <div id="chess-board" class="chess-board"></div>
+                </div>
+                
+                <div class="game-status">
+                    <div id="game-message">游戏正在进行中...</div>
+                    <div id="engine-thinking" class="hidden">AI 思考中...</div>
+                </div>
+            </section>
+            
+            <!-- 在线对战输入 -->
+            <section id="online-game-setup" class="panel hidden">
+                <h2>挑战好友</h2>
+                <div class="input-group">
+                    <label for="room-id">房间ID:</label>
+                    <input type="text" id="room-id" placeholder="输入房间ID或创建新房间">
+                    <button id="join-room">加入房间</button>
+                    <button id="create-room">创建房间</button>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>Ziffi Chess - 体验6步快棋的乐趣</p>
+        </footer>
+    </div>
+
+    <script src="js/chess-engine.js"></script>
+    <script src="js/game-controller.js"></script>
+    <script src="js/main.js"></script>
+    <script src="sw-register.js"></script>
+</body>
+</html>
