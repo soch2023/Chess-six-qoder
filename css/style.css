@@ -169,6 +169,24 @@ header p {
     transform: scale(1.05);
 }
 
+/* 返回主菜单按钮 */
+#back-to-menu {
+    background: linear-gradient(to right, #8b0000, #b22222);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    margin-left: 10px;
+}
+
+#back-to-menu:hover {
+    background: linear-gradient(to right, #a52a2a, #dc143c);
+    transform: scale(1.05);
+}
+
 /* 棋盘容器 */
 .board-container {
     width: 100%;
@@ -239,7 +257,7 @@ header p {
     border-radius: 0;
 }
 
-/* 棋子 */
+/* 棋子 - 修正黑方棋子为黑色 */
 .piece {
     width: 100%;
     height: 100%;
@@ -248,6 +266,11 @@ header p {
     justify-content: center;
     cursor: pointer;
     pointer-events: auto;
+}
+
+/* 黑色棋子 - 使用CSS滤镜将黑方棋子变黑 */
+.black-piece {
+    filter: brightness(0.8) contrast(1.2);
 }
 
 /* 游戏状态 */
@@ -306,6 +329,47 @@ header p {
 #online-game-setup button:hover {
     background: linear-gradient(to right, #4a9c9c, #5ab8b8);
     transform: scale(1.05);
+}
+
+/* 加载游戏面板 */
+.load-game-panel {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.load-game-panel h3 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #f0d9b5;
+}
+
+.load-game-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.load-game-input input {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #5d4037;
+    background: #2c2c2c;
+    color: white;
+    flex: 1;
+    min-width: 200px;
+}
+
+.load-game-input button {
+    background: linear-gradient(to right, #347474, #3a8c8c);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
 }
 
 /* 隐藏类 */
@@ -373,7 +437,7 @@ header p {
         grid-template-columns: 1fr;
     }
     
-    .control-btn {
+    .control-btn, #back-to-menu {
         padding: 8px 12px;
         font-size: 0.8rem;
     }

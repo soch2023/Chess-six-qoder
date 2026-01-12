@@ -49,6 +49,7 @@
                         <span id="timer">时间: 2:00</span>
                     </div>
                     <div class="controls">
+                        <button id="back-to-menu" class="control-btn">返回主菜单</button>
                         <button id="flip-board" class="control-btn">翻转棋盘</button>
                         <button id="swap-sides" class="control-btn">交换角色</button>
                         <button id="undo-move" class="control-btn">撤销</button>
@@ -64,6 +65,15 @@
                 <div class="game-status">
                     <div id="game-message">游戏正在进行中...</div>
                     <div id="engine-thinking" class="hidden">AI 思考中...</div>
+                </div>
+                
+                <!-- 加载游戏面板 -->
+                <div id="load-game-panel" class="load-game-panel hidden">
+                    <h3>加载游戏</h3>
+                    <div class="load-game-input">
+                        <input type="text" id="load-game-id" placeholder="输入游戏ID">
+                        <button id="load-game-btn">加载游戏</button>
+                    </div>
                 </div>
             </section>
             

@@ -411,3 +411,12 @@ window.addEventListener('unhandledrejection', function(e) {
     console.error('未处理的Promise拒绝:', e.reason);
     // 可以在这里添加错误报告逻辑
 });
+
+// 为黑方棋子添加CSS类
+function applyBlackPieceStyle() {
+    // 这个函数确保黑方棋子有适当的样式
+    // 实际的样式已在CSS中定义为.black-piece类
+}
+
+// 页面加载完成后应用样式
+document.addEventListener('DOMContentLoaded', applyBlackPieceStyle);

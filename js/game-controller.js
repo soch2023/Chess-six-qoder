@@ -39,10 +39,40 @@ class GameController {
         document.getElementById('undo-move').addEventListener('click', () => this.undoMove());
         document.getElementById('redo-move').addEventListener('click', () => this.redoMove());
         document.getElementById('new-game').addEventListener('click', () => this.newGame());
+        document.getElementById('back-to-menu').addEventListener('click', () => this.backToMenu());
+        
+        // 加载游戏功能
+        document.getElementById('load-game-btn').addEventListener('click', () => {
+            const gameId = document.getElementById('load-game-id').value.trim();
+            if (gameId) {
+                this.loadGame(gameId);
+            }
+        });
         
         // 在线游戏按钮
         document.getElementById('join-room').addEventListener('click', () => this.joinOnlineGame());
         document.getElementById('create-room').addEventListener('click', () => this.createOnlineGame());
+    }
+
+    // 返回主菜单功能
+    backToMenu() {
+        if (this.gameActive && !confirm('返回主菜单将结束当前游戏，确定要继续吗？')) {
+            return;
+        }
+        
+        // 隐藏游戏界面，显示模式选择界面
+        document.getElementById('game-mode-selection').classList.remove('hidden');
+        document.getElementById('online-game-setup').classList.add('hidden');
+        document.getElementById('game-board-container').classList.add('hidden');
+        
+        // 重置游戏状态
+        this.gameActive = false;
+        this.gameMode = null;
+        this.selectedSquare = null;
+        this.validMoves = [];
+        
+        // 隐藏难度选择
+        document.getElementById('difficulty-selection').classList.add('hidden');
     }
 
     setGameMode(mode) {
@@ -128,6 +158,7 @@ class GameController {
         const boardElement = document.getElementById('chess-board');
         boardElement.innerHTML = '';
         
+        // 使用当前翻转状态获取棋盘
         const board = this.engine.getBoard(this.isFlipped);
         const currentPlayer = this.engine.getCurrentPlayer();
         
@@ -141,7 +172,7 @@ class GameController {
                 const piece = board[row][col];
                 if (piece) {
                     const pieceElement = document.createElement('div');
-                    pieceElement.className = 'piece';
+                    pieceElement.className = `piece ${piece.startsWith('b') ? 'black-piece' : ''}`; // 为黑方棋子添加黑色样式
                     pieceElement.textContent = this.engine.getPieceSymbol(piece);
                     pieceElement.dataset.piece = piece;
                     
@@ -397,12 +428,17 @@ class GameController {
         this.renderBoard();
     }
 
+    // 修正交换角色功能 - 只交换执棋方，不翻转棋盘
     swapSides() {
-        this.engine.swapSides();
+        // 只交换当前玩家和颜色配置，不改变棋盘上的棋子位置
+        this.engine.currentPlayer = this.engine.currentPlayer === 'w' ? 'b' : 'w';
+        
+        // 交换玩家颜色配置
         this.playerColors = {
             human: this.playerColors.human === 'w' ? 'b' : 'w',
             ai: this.playerColors.ai === 'w' ? 'b' : 'w'
         };
+        
         this.updateGameStatus();
         this.renderBoard();
     }
