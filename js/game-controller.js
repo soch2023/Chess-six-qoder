@@ -267,7 +267,7 @@ class GameController {
     }
 
     saveStateForUndo() {
-        // 保存当前游戏状态以供撤销
+        // 保存当前游戏状态以供撤销，添加深度克隆防止引用问题
         this.undoStack.push({
             board: JSON.parse(JSON.stringify(this.engine.board)),
             currentPlayer: this.engine.currentPlayer,
@@ -279,15 +279,21 @@ class GameController {
             },
             gameOver: this.engine.gameOver,
             winner: this.engine.winner,
-            selectedSquare: this.selectedSquare,
-            validMoves: [...this.validMoves]
+            selectedSquare: this.selectedSquare ? {...this.selectedSquare} : null,
+            validMoves: [...this.validMoves.map(move => ({...move}))],
+            isFlipped: this.engine.isFlipped
         });
+        
+        // 限制撤销栈大小以节省内存
+        if (this.undoStack.length > 50) {
+            this.undoStack.shift(); // 移除最早的记录
+        }
     }
 
     undoMove() {
         if (this.undoStack.length === 0) {
             console.log("无法撤销更多步数");
-            return;
+            return false;
         }
         
         // 将当前状态保存到重做栈
@@ -302,9 +308,15 @@ class GameController {
             },
             gameOver: this.engine.gameOver,
             winner: this.engine.winner,
-            selectedSquare: this.selectedSquare,
-            validMoves: [...this.validMoves]
+            selectedSquare: this.selectedSquare ? {...this.selectedSquare} : null,
+            validMoves: [...this.validMoves.map(move => ({...move}))],
+            isFlipped: this.engine.isFlipped
         });
+        
+        // 限制重做栈大小
+        if (this.redoStack.length > 50) {
+            this.redoStack.shift();
+        }
         
         // 恢复上一个状态
         const prevState = this.undoStack.pop();
@@ -318,18 +330,21 @@ class GameController {
         };
         this.engine.gameOver = prevState.gameOver;
         this.engine.winner = prevState.winner;
+        this.engine.isFlipped = prevState.isFlipped; // 确保翻转状态也被恢复
         
-        this.selectedSquare = prevState.selectedSquare;
-        this.validMoves = [...prevState.validMoves];
+        this.selectedSquare = prevState.selectedSquare ? {...prevState.selectedSquare} : null;
+        this.validMoves = [...prevState.validMoves.map(move => ({...move}))];
         
         this.updateGameStatus();
         this.renderBoard();
+        
+        return true;
     }
 
     redoMove() {
         if (this.redoStack.length === 0) {
             console.log("无法重做更多步数");
-            return;
+            return false;
         }
         
         // 将当前状态保存到撤销栈
@@ -344,9 +359,15 @@ class GameController {
             },
             gameOver: this.engine.gameOver,
             winner: this.engine.winner,
-            selectedSquare: this.selectedSquare,
-            validMoves: [...this.validMoves]
+            selectedSquare: this.selectedSquare ? {...this.selectedSquare} : null,
+            validMoves: [...this.validMoves.map(move => ({...move}))],
+            isFlipped: this.engine.isFlipped
         });
+        
+        // 限制撤销栈大小
+        if (this.undoStack.length > 50) {
+            this.undoStack.shift();
+        }
         
         // 恢复下一个状态
         const nextState = this.redoStack.pop();
@@ -360,12 +381,15 @@ class GameController {
         };
         this.engine.gameOver = nextState.gameOver;
         this.engine.winner = nextState.winner;
+        this.engine.isFlipped = nextState.isFlipped; // 确保翻转状态也被恢复
         
-        this.selectedSquare = nextState.selectedSquare;
-        this.validMoves = [...nextState.validMoves];
+        this.selectedSquare = nextState.selectedSquare ? {...nextState.selectedSquare} : null;
+        this.validMoves = [...nextState.validMoves.map(move => ({...move}))];
         
         this.updateGameStatus();
         this.renderBoard();
+        
+        return true;
     }
 
     flipBoard() {

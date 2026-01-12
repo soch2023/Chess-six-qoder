@@ -12,22 +12,27 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeGame() {
-    // 创建游戏控制器实例
-    gameController = new GameController();
-    
-    // 设置默认难度为3（高手级别）
-    gameController.setDifficulty(3);
-    
-    // 初始化PWA功能
-    initializePWA();
-    
-    // 初始化触摸事件处理
-    initializeTouchEvents();
-    
-    // 添加测试功能
-    initializeTestFunctions();
-    
-    console.log('Ziffi Chess 游戏初始化完成');
+    try {
+        // 创建游戏控制器实例
+        gameController = new GameController();
+        
+        // 设置默认难度为3（高手级别）
+        gameController.setDifficulty(3);
+        
+        // 初始化PWA功能
+        initializePWA();
+        
+        // 初始化触摸事件处理
+        initializeTouchEvents();
+        
+        // 添加测试功能
+        initializeTestFunctions();
+        
+        console.log('Ziffi Chess 游戏初始化完成');
+    } catch (error) {
+        console.error('Ziffi Chess 初始化失败:', error);
+        alert('游戏初始化失败，请刷新页面重试');
+    }
 }
 
 function initializeTestFunctions() {
@@ -84,6 +89,26 @@ function initializeTouchEvents() {
         board.addEventListener('touchstart', handleTouchStart, false);
         board.addEventListener('touchmove', handleTouchMove, false);
         board.addEventListener('touchend', handleTouchEnd, false);
+        
+        // 防止触摸时的默认行为（如缩放）
+        board.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault(); // 防止多点触控缩放
+            }
+        }, { passive: false });
+        
+        // 解决点击和触摸事件冲突
+        let isTouchDevice = false;
+        
+        document.addEventListener('touchstart', function() {
+            isTouchDevice = true;
+        }, { passive: true });
+        
+        document.addEventListener('mousemove', function() {
+            if (!isTouchDevice) {
+                // 在非触摸设备上启用鼠标事件
+            }
+        }, { passive: true });
     }
 }
 
@@ -159,33 +184,39 @@ document.addEventListener('visibilitychange', () => {
 
 // 处理键盘快捷键
 document.addEventListener('keydown', (event) => {
+    // 检查游戏控制器是否存在
+    if (!gameController) return;
+    
     // Ctrl+Z 或 Cmd+Z 撤销
     if ((event.ctrlKey || event.metaKey) && event.key === 'z') {
         event.preventDefault();
-        gameController?.undoMove();
+        gameController.undoMove();
     }
     
     // Ctrl+Shift+Z 或 Cmd+Shift+Z 重做
     if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'Z') {
         event.preventDefault();
-        gameController?.redoMove();
+        gameController.redoMove();
     }
     
     // R键新游戏
     if (event.key === 'r' || event.key === 'R') {
+        event.preventDefault(); // 防止页面刷新
         if (confirm('确定要开始新游戏吗？')) {
-            gameController?.newGame();
+            gameController.newGame();
         }
     }
     
     // F键翻转棋盘
     if (event.key === 'f' || event.key === 'F') {
-        gameController?.flipBoard();
+        event.preventDefault();
+        gameController.flipBoard();
     }
     
     // S键交换角色
     if (event.key === 's' || event.key === 'S') {
-        gameController?.swapSides();
+        event.preventDefault();
+        gameController.swapSides();
     }
     
     // D键显示调试信息
@@ -198,8 +229,8 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// 处理窗口大小变化（响应式设计）
-window.addEventListener('resize', debounce(updateLayout, 250));
+// 处理窗口大小变化（响应式设计）- 使用节流优化
+window.addEventListener('resize', throttle(updateLayout, 250));
 
 function updateLayout() {
     // 在窗口大小变化时调整布局
@@ -210,6 +241,21 @@ function updateLayout() {
             gameController.renderBoard();
         }, 100);
     }
+}
+
+// 节流函数，避免频繁触发
+function throttle(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func(...args), wait);
+        };
+        if (!timeout) {
+            func(...args);
+            timeout = setTimeout(later, wait);
+        }
+    };
 }
 
 // 防抖函数，避免频繁触发
@@ -354,3 +400,14 @@ function runFunctionalTests() {
 
 // 页面加载后运行测试
 window.addEventListener('load', runFunctionalTests);
+
+// 添加全局错误处理
+window.addEventListener('error', function(e) {
+    console.error('全局错误:', e.error);
+    // 可以在这里添加错误报告逻辑
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('未处理的Promise拒绝:', e.reason);
+    // 可以在这里添加错误报告逻辑
+});

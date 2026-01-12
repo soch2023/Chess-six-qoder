@@ -667,31 +667,47 @@ class ChessEngine {
 
     // AI移动 - 根据难度实现不同的策略
     getAIMove(player, difficulty) {
-        // 根据难度设置不同的AI策略
-        // 难度级别: 0-5 对应 ELO 600-2800
-        switch(difficulty) {
-            case 0: // 600 ELO
-                return this.getVeryEasyMove(player);
-            case 1: // 1000 ELO
-                return this.getEasyMove(player);
-            case 2: // 1400 ELO
-                return this.getMediumMove(player);
-            case 3: // 1800 ELO
-                return this.minimaxRoot(player, 2);
-            case 4: // 2200 ELO
-                return this.minimaxRoot(player, 3);
-            case 5: // 2800 ELO
-                return this.minimaxRoot(player, 4);
-            default:
-                return this.minimaxRoot(player, 3); // 默认使用专家级别
-        }
-    }
-
-    // 非常简单 - 几乎随机移动
-    getVeryEasyMove(player) {
-        // 600 ELO - 经常犯错，有时会放弃好位置的棋子
+        // 首先获取所有可能的移动
         const allPossibleMoves = this.getAllPossibleMoves(player);
         
+        // 如果没有可能的移动，返回null
+        if (allPossibleMoves.length === 0) {
+            return null;
+        }
+        
+        // 根据难度选择策略
+        let selectedMove;
+        
+        switch(difficulty) {
+            case 0: // 600 ELO - 非常简单
+                selectedMove = this.getVeryEasyMove(player, allPossibleMoves);
+                break;
+            case 1: // 1000 ELO - 简单
+                selectedMove = this.getEasyMove(player, allPossibleMoves);
+                break;
+            case 2: // 1400 ELO - 中等
+                selectedMove = this.getMediumMove(player, allPossibleMoves);
+                break;
+            case 3: // 1800 ELO - 困难
+                selectedMove = this.minimaxRoot(player, 2, allPossibleMoves);
+                break;
+            case 4: // 2200 ELO - 专家
+                selectedMove = this.minimaxRoot(player, 3, allPossibleMoves);
+                break;
+            case 5: // 2800 ELO - 大师
+                selectedMove = this.minimaxRoot(player, 4, allPossibleMoves);
+                break;
+            default:
+                selectedMove = this.minimaxRoot(player, 3, allPossibleMoves);
+        }
+        
+        // 如果AI策略返回无效移动，返回第一个可能的移动
+        return selectedMove || allPossibleMoves[0];
+    }
+
+    // 更新各个难度级别的函数以接受可能移动列表
+    getVeryEasyMove(player, allPossibleMoves) {
+        // 600 ELO - 经常犯错，有时会放弃好位置的棋子
         // 10%概率故意走坏棋
         if (Math.random() < 0.1) {
             // 随机选择一个可能不是最好的移动
@@ -702,11 +718,8 @@ class ChessEngine {
         return this.evaluateAndSelectMove(allPossibleMoves, player, 0.2);
     }
 
-    // 简单 - 基础策略
-    getEasyMove(player) {
+    getEasyMove(player, allPossibleMoves) {
         // 1000 ELO - 会吃子，但不会考虑太多步数
-        const allPossibleMoves = this.getAllPossibleMoves(player);
-        
         // 优先选择能吃子的移动
         const captureMoves = allPossibleMoves.filter(move => move.type === 'capture');
         if (captureMoves.length > 0 && Math.random() < 0.7) {
@@ -718,13 +731,10 @@ class ChessEngine {
         return allPossibleMoves[Math.floor(Math.random() * allPossibleMoves.length)];
     }
 
-    // 中等难度
-    getMediumMove(player) {
+    getMediumMove(player, allPossibleMoves) {
         // 1400 ELO - 会考虑防守和进攻
-        const allPossibleMoves = this.getAllPossibleMoves(player);
-        
         // 评估所有移动的价值
-        let bestMove = null;
+        let bestMove = allPossibleMoves[0];
         let bestScore = -Infinity;
         
         for (const move of allPossibleMoves) {
@@ -736,222 +746,37 @@ class ChessEngine {
             }
         }
         
-        return bestMove || allPossibleMoves[0];
-    }
-
-    // 困难 - 使用minimax算法
-    getHardMove(player) {
-        // 1800 ELO - 使用有限深度的minimax
-        return this.minimax(player, 2); // 深度2
-    }
-
-    // 专家级别
-    getExpertMove(player) {
-        // 2200 ELO - 使用更深的minimax和更好的评估函数
-        return this.minimax(player, 3); // 深度3
-    }
-
-    // 大师级别
-    getMasterMove(player) {
-        // 2800 ELO - 使用更深的minimax和高级评估函数
-        return this.minimax(player, 4); // 深度4
-    }
-
-    // 获取所有可能的移动
-    getAllPossibleMoves(player) {
-        const moves = [];
-        
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = this.getPiece(row, col);
-                if (piece && piece[0] === player) {
-                    const pieceMoves = this.generateValidMoves(row, col);
-                    for (const move of pieceMoves) {
-                        moves.push({ 
-                            fromRow: row, 
-                            fromCol: col, 
-                            toRow: move.toRow, 
-                            toCol: move.toCol,
-                            type: move.type,
-                            piece: piece
-                        });
-                    }
-                }
-            }
-        }
-        
-        return moves;
-    }
-
-    // 评估移动价值
-    evaluateMove(move, player, depth = 1) {
-        // 模拟移动
-        const originalPiece = this.board[move.fromRow][move.fromCol];
-        const targetPiece = this.board[move.toRow][move.toCol];
-        
-        // 执行移动
-        this.board[move.toRow][move.toCol] = originalPiece;
-        this.board[move.fromRow][move.fromCol] = null;
-        
-        // 评估位置
-        let score = this.evaluatePosition(player);
-        
-        // 如果还有深度，考虑对手的回应
-        if (depth > 1) {
-            const opponent = player === 'w' ? 'b' : 'w';
-            const opponentBestResponse = this.getBestMoveForPlayer(opponent, depth - 1);
-            if (opponentBestResponse) {
-                // 模拟对手的最佳回应并再次评估
-                const oppOriginal = this.board[opponentBestResponse.fromRow][opponentBestResponse.fromCol];
-                const oppTarget = this.board[opponentBestResponse.toRow][opponentBestResponse.toCol];
-                
-                this.board[opponentBestResponse.toRow][opponentBestResponse.toCol] = oppOriginal;
-                this.board[opponentBestResponse.fromRow][opponentBestResponse.fromCol] = null;
-                
-                score -= this.evaluatePosition(player) * 0.6; // 对手的得分按比例减少
-                
-                // 恢复对手的移动
-                this.board[opponentBestResponse.fromRow][opponentBestResponse.fromCol] = oppOriginal;
-                this.board[opponentBestResponse.toRow][opponentBestResponse.toCol] = oppTarget;
-            }
-        }
-        
-        // 恢复原始位置
-        this.board[move.fromRow][move.fromCol] = originalPiece;
-        this.board[move.toRow][move.toCol] = targetPiece;
-        
-        return score;
-    }
-
-    // 评估当前位置的价值
-    evaluatePosition(player) {
-        let score = 0;
-        const pieceValues = {
-            'P': 100,  // 兵
-            'N': 320,  // 马
-            'B': 330,  // 象
-            'R': 500,  // 车
-            'Q': 900,  // 后
-            'K': 20000 // 王
-        };
-        
-        // 计算棋盘上的棋子价值
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const piece = this.board[row][col];
-                if (piece) {
-                    const value = pieceValues[piece[1]] || 0;
-                    if (piece[0] === player) {
-                        score += value;
-                    } else {
-                        score -= value;
-                    }
-                }
-            }
-        }
-        
-        // 考虑被吃的棋子
-        for (const captured of this.capturedPieces[player]) {
-            score += pieceValues[captured[1]] || 0;
-        }
-        
-        const opponent = player === 'w' ? 'b' : 'w';
-        for (const captured of this.capturedPieces[opponent]) {
-            score -= pieceValues[captured[1]] || 0;
-        }
-        
-        // 添加位置价值评估（简化）
-        // 中心控制权
-        const centerSquares = [[3,3], [3,4], [4,3], [4,4]];
-        for (const [r, c] of centerSquares) {
-            const piece = this.board[r][c];
-            if (piece && piece[0] === player) {
-                score += 10;
-            } else if (piece) {
-                score -= 5;
-            }
-        }
-        
-        return score;
-    }
-
-    // 获取玩家的最佳移动（用于评估）
-    getBestMoveForPlayer(player, depth) {
-        const moves = this.getAllPossibleMoves(player);
-        if (moves.length === 0) return null;
-        
-        let bestMove = moves[0];
-        let bestScore = -Infinity;
-        
-        for (const move of moves) {
-            // 模拟移动
-            const originalPiece = this.board[move.fromRow][move.fromCol];
-            const targetPiece = this.board[move.toRow][move.toCol];
-            
-            this.board[move.toRow][move.toCol] = originalPiece;
-            this.board[move.fromRow][move.fromCol] = null;
-            
-            const score = depth > 1 ? 
-                this.evaluatePosition(player) - this.getWorstScoreForOpponent(
-                    player === 'w' ? 'b' : 'w', 
-                    depth - 1
-                ) * 0.8 : 
-                this.evaluatePosition(player);
-            
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = move;
-            }
-            
-            // 恢复
-            this.board[move.fromRow][move.fromCol] = originalPiece;
-            this.board[move.toRow][move.toCol] = targetPiece;
-        }
-        
         return bestMove;
     }
 
-    // 获取对手最差分数（用于minimax）
-    getWorstScoreForOpponent(opponent, depth) {
-        const moves = this.getAllPossibleMoves(opponent);
-        if (moves.length === 0) return 0;
+    // 修正minimaxRoot函数以接受可能移动列表
+    minimaxRoot(player, depth, allPossibleMoves = null) {
+        // 如果没有传入可能的移动，计算它们
+        const moves = allPossibleMoves || this.getAllPossibleMoves(player);
         
-        let worstScore = Infinity;
-        
-        for (const move of moves) {
-            // 模拟移动
-            const originalPiece = this.board[move.fromRow][move.fromCol];
-            const targetPiece = this.board[move.toRow][move.toCol];
+        if (moves.length === 0) {
+            return null;
+        }
+
+        if (depth <= 0) {
+            // 如果深度为0，返回评估最佳的移动
+            let bestMove = moves[0];
+            let bestScore = -Infinity;
             
-            this.board[move.toRow][move.toCol] = originalPiece;
-            this.board[move.fromRow][move.fromCol] = null;
-            
-            const score = depth > 1 ? 
-                this.evaluatePosition(opponent) - this.getBestScoreForOpponent(
-                    opponent === 'w' ? 'b' : 'w', 
-                    depth - 1
-                ) * 0.8 : 
-                this.evaluatePosition(opponent);
-            
-            if (score < worstScore) {
-                worstScore = score;
+            for (const move of moves) {
+                const score = this.evaluateMove(move, player, 0);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
             }
             
-            // 恢复
-            this.board[move.fromRow][move.fromCol] = originalPiece;
-            this.board[move.toRow][move.toCol] = targetPiece;
+            return bestMove;
         }
-        
-        return worstScore;
-    }
 
-    // 获取对手最佳分数
-    getBestScoreForOpponent(opponent, depth) {
-        const moves = this.getAllPossibleMoves(opponent);
-        if (moves.length === 0) return 0;
-        
+        let bestMove = moves[0];
         let bestScore = -Infinity;
-        
+
         for (const move of moves) {
             // 模拟移动
             const originalPiece = this.board[move.fromRow][move.fromCol];
@@ -959,24 +784,33 @@ class ChessEngine {
             
             this.board[move.toRow][move.toCol] = originalPiece;
             this.board[move.fromRow][move.fromCol] = null;
+
+            // 为对手更新玩家
+            const opponent = player === 'w' ? 'b' : 'w';
             
-            const score = depth > 1 ? 
-                this.evaluatePosition(opponent) : 
-                this.evaluatePosition(opponent);
-            
-            if (score > bestScore) {
-                bestScore = score;
-            }
-            
-            // 恢复
+            // 递归调用minimax
+            const result = this.minimax(
+                opponent,
+                depth - 1,
+                false, // 下一层是最小化层
+                -Infinity,
+                Infinity
+            );
+
+            // 恢复移动
             this.board[move.fromRow][move.fromCol] = originalPiece;
             this.board[move.toRow][move.toCol] = targetPiece;
-        }
-        
-        return bestScore;
-    }
 
-    // Minimax算法实现
+            if (result.score > bestScore) {
+                bestScore = result.score;
+                bestMove = move;
+            }
+        }
+
+        return bestMove;
+    }
+    
+    // 修正minimax函数
     minimax(player, depth, isMaximizing = true, alpha = -Infinity, beta = Infinity) {
         if (depth === 0) {
             // 返回当前位置评估
@@ -1013,8 +847,9 @@ class ChessEngine {
             this.board[move.fromRow][move.fromCol] = null;
 
             // 递归调用minimax
+            const opponent = player === 'w' ? 'b' : 'w';
             const result = this.minimax(
-                player === 'w' ? 'b' : 'w', // 切换玩家
+                opponent,
                 depth - 1,
                 !isMaximizing,
                 alpha,
@@ -1045,56 +880,7 @@ class ChessEngine {
             }
         }
 
-        if (depth === parseInt(this.constructor.name.replace(/\D/g, '') || '2')) { // 这里需要修正
-            return bestMove;
-        }
-        
         return { score: bestScore, ...bestMove };
-    }
-    
-    // 修正minimax的返回值处理
-    minimaxRoot(player, depth) {
-        if (depth === 0) {
-            const moves = this.getAllPossibleMoves(player);
-            return moves.length > 0 ? moves[0] : null;
-        }
-
-        const moves = this.getAllPossibleMoves(player);
-        if (moves.length === 0) {
-            return null;
-        }
-
-        let bestMove = moves[0];
-        let bestScore = -Infinity;
-
-        for (const move of moves) {
-            // 模拟移动
-            const originalPiece = this.board[move.fromRow][move.fromCol];
-            const targetPiece = this.board[move.toRow][move.toCol];
-            
-            this.board[move.toRow][move.toCol] = originalPiece;
-            this.board[move.fromRow][move.fromCol] = null;
-
-            // 递归调用minimax
-            const result = this.minimax(
-                player === 'w' ? 'b' : 'w', // 切换玩家
-                depth - 1,
-                false, // 下一层是最小化层
-                -Infinity,
-                Infinity
-            );
-
-            // 恢复移动
-            this.board[move.fromRow][move.fromCol] = originalPiece;
-            this.board[move.toRow][move.toCol] = targetPiece;
-
-            if (result.score > bestScore) {
-                bestScore = result.score;
-                bestMove = move;
-            }
-        }
-
-        return bestMove;
     }
 }
 
